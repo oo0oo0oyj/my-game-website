@@ -5,38 +5,52 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Racing Sans One', Arial, sans-serif;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background: #f0f0f0;
+    background: #1a1a1a;
+    color: #fff;
 }
 
 .screen {
-    background: white;
+    background: rgba(0, 0, 0, 0.8);
     padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 0 20px rgba(255, 87, 34, 0.3);
     text-align: center;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 87, 34, 0.2);
 }
 
 h1 {
     margin-bottom: 2rem;
-    color: #333;
+    color: #FF5722;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
 }
 
 .form {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
 }
 
 input {
-    padding: 0.5rem;
+    padding: 0.8rem;
     font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 2px solid #FF5722;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transition: all 0.3s ease;
+}
+
+input:focus {
+    outline: none;
+    box-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
 }
 
 .color-selection {
@@ -44,39 +58,82 @@ input {
     gap: 1rem;
     justify-content: center;
     align-items: center;
+    padding: 1rem;
+}
+
+.color-selection label {
+    font-size: 1.1rem;
+    color: #FF5722;
 }
 
 .color-btn {
-    width: 30px;
-    height: 30px;
-    border: none;
+    width: 40px;
+    height: 40px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
 .color-btn:hover {
     transform: scale(1.1);
+    border-color: #FF5722;
 }
 
 .color-btn.selected {
-    border: 2px solid #333;
+    border: 3px solid #FF5722;
+    box-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
 }
 
 button {
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
-    background: #4CAF50;
+    padding: 0.8rem 1.5rem;
+    font-size: 1.1rem;
+    background: #FF5722;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 button:hover {
-    background: #45a049;
+    background: #f4511e;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 87, 34, 0.4);
+}
+
+#gameScreen {
+    padding: 0;
+    overflow: hidden;
+    background: none;
+    box-shadow: none;
+    border: none;
 }
 
 #gameCanvas {
-    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(255, 87, 34, 0.3);
+}
+
+#endScreen {
+    text-align: center;
+}
+
+#endScreen h2 {
+    color: #FF5722;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+#endScreen p {
+    font-size: 1.2rem;
+    margin: 0.5rem 0;
+    color: #fff;
+}
+
+#finalDistance {
+    color: #FF5722;
+    font-weight: bold;
 } 

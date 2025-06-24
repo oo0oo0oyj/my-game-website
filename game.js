@@ -6,11 +6,12 @@ class Game {
         this.carColor = '';
         this.distance = 0;
         this.gameLoop = null;
-        this.blocks = [];
-        this.carPosition = 0; // Horizontal position of the car
+        this.obstacles = [];
+        this.carPosition = 0;
         this.gameSpeed = 5;
-        this.blockSpawnRate = 60;
+        this.obstacleSpawnRate = 100;
         this.frameCount = 0;
+        this.roadOffset = 0;
         
         // Set canvas size
         this.canvas.width = 400;
@@ -21,15 +22,14 @@ class Game {
         this.carHeight = 90;
         this.carY = this.canvas.height - 100;
         
-        // Block dimensions
-        this.blockWidth = 60;
-        this.blockHeight = 40;
-        
         // Initialize car position to center
         this.carPosition = (this.canvas.width - this.carWidth) / 2;
         
         // Movement speed
-        this.moveSpeed = 25; // Increased from 10 to 25
+        this.moveSpeed = 25;
+        
+        // Obstacle types
+        this.obstacleTypes = ['car', 'mine', 'oil'];
         
         // Bind methods
         this.handleKeyDown = this.handleKeyDown.bind(this);
@@ -39,7 +39,7 @@ class Game {
         this.playerName = playerName;
         this.carColor = carColor;
         this.distance = 0;
-        this.blocks = [];
+        this.obstacles = [];
         this.carPosition = (this.canvas.width - this.carWidth) / 2;
         this.gameSpeed = 5;
         
@@ -58,11 +58,95 @@ class Game {
         }
     }
 
-    spawnBlock() {
-        const x = Math.random() * (this.canvas.width - this.blockWidth);
-        this.blocks.push({
+    drawRoadBackground() {
+        // Draw road
+        this.ctx.fillStyle = '#333';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Draw side lines
+        this.ctx.fillStyle = '#FF5722';
+        this.ctx.fillRect(0, 0, 10, this.canvas.height);
+        this.ctx.fillRect(this.canvas.width - 10, 0, 10, this.canvas.height);
+        
+        // Draw center lines
+        const lineHeight = 30;
+        const lineGap = 50;
+        const totalLines = Math.ceil(this.canvas.height / (lineHeight + lineGap));
+        
+        this.ctx.fillStyle = '#fff';
+        for (let i = 0; i < totalLines; i++) {
+            const y = ((this.roadOffset + i * (lineHeight + lineGap)) % this.canvas.height) - lineHeight;
+            this.ctx.fillRect(this.canvas.width / 2 - 5, y, 10, lineHeight);
+        }
+    }
+
+    drawObstacle(obstacle) {
+        const x = obstacle.x;
+        const y = obstacle.y;
+        
+        switch(obstacle.type) {
+            case 'car':
+                // Enemy car
+                this.ctx.fillStyle = '#666';
+                this.ctx.beginPath();
+                this.ctx.moveTo(x + 25, y);
+                this.ctx.lineTo(x + 45, y + 30);
+                this.ctx.lineTo(x + 45, y + 60);
+                this.ctx.lineTo(x + 5, y + 60);
+                this.ctx.lineTo(x + 5, y + 30);
+                this.ctx.closePath();
+                this.ctx.fill();
+                
+                // Windows
+                this.ctx.fillStyle = '#333';
+                this.ctx.fillRect(x + 10, y + 10, 30, 15);
+                break;
+                
+            case 'mine':
+                // Mine body
+                this.ctx.fillStyle = '#333';
+                this.ctx.beginPath();
+                this.ctx.arc(x + 25, y + 25, 20, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                // Spikes
+                this.ctx.fillStyle = '#666';
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const spikeX = x + 25 + Math.cos(angle) * 25;
+                    const spikeY = y + 25 + Math.sin(angle) * 25;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x + 25, y + 25);
+                    this.ctx.lineTo(spikeX, spikeY);
+                    this.ctx.lineWidth = 5;
+                    this.ctx.strokeStyle = '#666';
+                    this.ctx.stroke();
+                }
+                break;
+                
+            case 'oil':
+                // Oil slick
+                const gradient = this.ctx.createRadialGradient(
+                    x + 25, y + 25, 5,
+                    x + 25, y + 25, 25
+                );
+                gradient.addColorStop(0, 'rgba(0, 0, 0, 0.8)');
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)');
+                this.ctx.fillStyle = gradient;
+                this.ctx.beginPath();
+                this.ctx.ellipse(x + 25, y + 25, 25, 20, 0, 0, Math.PI * 2);
+                this.ctx.fill();
+                break;
+        }
+    }
+
+    spawnObstacle() {
+        const type = this.obstacleTypes[Math.floor(Math.random() * this.obstacleTypes.length)];
+        const x = Math.random() * (this.canvas.width - 50);
+        this.obstacles.push({
             x: x,
-            y: -this.blockHeight
+            y: -50,
+            type: type
         });
     }
 
@@ -182,54 +266,67 @@ class Game {
     update() {
         this.frameCount++;
         this.distance += this.gameSpeed;
+        this.roadOffset = (this.roadOffset + this.gameSpeed) % 80;
         
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Spawn new blocks
-        if (this.frameCount % this.blockSpawnRate === 0) {
-            this.spawnBlock();
+        // Draw road background
+        this.drawRoadBackground();
+        
+        // Spawn new obstacles
+        if (this.frameCount % this.obstacleSpawnRate === 0) {
+            this.spawnObstacle();
         }
         
-        // Update and draw blocks
-        for (let i = this.blocks.length - 1; i >= 0; i--) {
-            const block = this.blocks[i];
-            block.y += this.gameSpeed;
+        // Update and draw obstacles
+        for (let i = this.obstacles.length - 1; i >= 0; i--) {
+            const obstacle = this.obstacles[i];
+            obstacle.y += this.gameSpeed;
             
-            // Draw block
-            this.ctx.fillStyle = '#666';
-            this.ctx.fillRect(block.x, block.y, this.blockWidth, this.blockHeight);
+            this.drawObstacle(obstacle);
             
             // Check collision
-            if (this.checkCollision(block)) {
+            if (this.checkCollision(obstacle)) {
                 this.endGame();
                 return;
             }
             
-            // Remove blocks that are off screen
-            if (block.y > this.canvas.height) {
-                this.blocks.splice(i, 1);
+            // Remove obstacles that are off screen
+            if (obstacle.y > this.canvas.height) {
+                this.obstacles.splice(i, 1);
             }
         }
         
-        // Draw car using the new method
+        // Draw car
         this.drawCar(this.carPosition, this.carY);
         
         // Draw distance
-        this.ctx.fillStyle = '#000';
-        this.ctx.font = '20px Arial';
+        this.ctx.fillStyle = '#fff';
+        this.ctx.font = 'bold 20px Racing Sans One';
         this.ctx.fillText(`Distance: ${Math.floor(this.distance)}m`, 10, 30);
         
         // Continue game loop
         this.gameLoop = requestAnimationFrame(() => this.update());
     }
 
-    checkCollision(block) {
+    checkCollision(obstacle) {
+        // Adjust collision box size based on obstacle type
+        let obstacleWidth = 50;
+        let obstacleHeight = 50;
+        
+        if (obstacle.type === 'car') {
+            obstacleHeight = 60;
+        } else if (obstacle.type === 'oil') {
+            obstacleWidth = 40;
+            obstacleHeight = 40;
+        }
+        
         return (
-            this.carPosition < block.x + this.blockWidth &&
-            this.carPosition + this.carWidth > block.x &&
-            this.carY < block.y + this.blockHeight &&
-            this.carY + this.carHeight > block.y
+            this.carPosition < obstacle.x + obstacleWidth &&
+            this.carPosition + this.carWidth > obstacle.x &&
+            this.carY < obstacle.y + obstacleHeight &&
+            this.carY + this.carHeight > obstacle.y
         );
     }
 
