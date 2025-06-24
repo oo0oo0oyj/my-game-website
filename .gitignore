@@ -11,3 +11,7 @@ build/
 # 忽略敏感信息
 .env
 *.key
+
+# 忽略日志文件
+*.log
+npm-debug.log*
