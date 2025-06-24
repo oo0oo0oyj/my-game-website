@@ -17,8 +17,8 @@ class Game {
         this.canvas.height = 600;
         
         // Car dimensions
-        this.carWidth = 40;
-        this.carHeight = 60;
+        this.carWidth = 50;
+        this.carHeight = 90;
         this.carY = this.canvas.height - 100;
         
         // Block dimensions
@@ -66,6 +66,119 @@ class Game {
         });
     }
 
+    drawCar(x, y) {
+        // Save the current context state
+        this.ctx.save();
+        
+        // Main car body
+        this.ctx.fillStyle = this.carColor;
+        
+        // Car body - bottom part (wider)
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, y + this.carHeight * 0.8);
+        this.ctx.lineTo(x + this.carWidth, y + this.carHeight * 0.8);
+        this.ctx.lineTo(x + this.carWidth * 0.9, y + this.carHeight);
+        this.ctx.lineTo(x + this.carWidth * 0.1, y + this.carHeight);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Car body - top part (sleek)
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + this.carWidth * 0.2, y + this.carHeight * 0.8);
+        this.ctx.lineTo(x + this.carWidth * 0.8, y + this.carHeight * 0.8);
+        this.ctx.lineTo(x + this.carWidth * 0.7, y + this.carHeight * 0.2);
+        this.ctx.lineTo(x + this.carWidth * 0.3, y + this.carHeight * 0.2);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Windshield
+        this.ctx.fillStyle = '#333';
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + this.carWidth * 0.3, y + this.carHeight * 0.3);
+        this.ctx.lineTo(x + this.carWidth * 0.7, y + this.carHeight * 0.3);
+        this.ctx.lineTo(x + this.carWidth * 0.65, y + this.carHeight * 0.2);
+        this.ctx.lineTo(x + this.carWidth * 0.35, y + this.carHeight * 0.2);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Wheels
+        this.ctx.fillStyle = '#333';
+        // Front wheel
+        this.ctx.beginPath();
+        this.ctx.ellipse(
+            x + this.carWidth * 0.25,
+            y + this.carHeight * 0.9,
+            this.carWidth * 0.12,
+            this.carHeight * 0.1,
+            0,
+            0,
+            Math.PI * 2
+        );
+        this.ctx.fill();
+        
+        // Rear wheel
+        this.ctx.beginPath();
+        this.ctx.ellipse(
+            x + this.carWidth * 0.75,
+            y + this.carHeight * 0.9,
+            this.carWidth * 0.12,
+            this.carHeight * 0.1,
+            0,
+            0,
+            Math.PI * 2
+        );
+        this.ctx.fill();
+        
+        // Wheel rims
+        this.ctx.fillStyle = '#DDD';
+        [0.25, 0.75].forEach(wheelX => {
+            this.ctx.beginPath();
+            this.ctx.ellipse(
+                x + this.carWidth * wheelX,
+                y + this.carHeight * 0.9,
+                this.carWidth * 0.06,
+                this.carHeight * 0.05,
+                0,
+                0,
+                Math.PI * 2
+            );
+            this.ctx.fill();
+        });
+        
+        // Add shine/reflection
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + this.carWidth * 0.35, y + this.carHeight * 0.25);
+        this.ctx.lineTo(x + this.carWidth * 0.65, y + this.carHeight * 0.25);
+        this.ctx.lineTo(x + this.carWidth * 0.6, y + this.carHeight * 0.4);
+        this.ctx.lineTo(x + this.carWidth * 0.4, y + this.carHeight * 0.4);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Add side details (air intakes)
+        this.ctx.fillStyle = '#222';
+        // Left intake
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + this.carWidth * 0.1, y + this.carHeight * 0.6);
+        this.ctx.lineTo(x + this.carWidth * 0.2, y + this.carHeight * 0.6);
+        this.ctx.lineTo(x + this.carWidth * 0.2, y + this.carHeight * 0.7);
+        this.ctx.lineTo(x + this.carWidth * 0.1, y + this.carHeight * 0.75);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Right intake
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + this.carWidth * 0.8, y + this.carHeight * 0.6);
+        this.ctx.lineTo(x + this.carWidth * 0.9, y + this.carHeight * 0.6);
+        this.ctx.lineTo(x + this.carWidth * 0.9, y + this.carHeight * 0.75);
+        this.ctx.lineTo(x + this.carWidth * 0.8, y + this.carHeight * 0.7);
+        this.ctx.closePath();
+        this.ctx.fill();
+        
+        // Restore the context state
+        this.ctx.restore();
+    }
+
     update() {
         this.frameCount++;
         this.distance += this.gameSpeed;
@@ -99,9 +212,8 @@ class Game {
             }
         }
         
-        // Draw car
-        this.ctx.fillStyle = this.carColor;
-        this.ctx.fillRect(this.carPosition, this.carY, this.carWidth, this.carHeight);
+        // Draw car using the new method
+        this.drawCar(this.carPosition, this.carY);
         
         // Draw distance
         this.ctx.fillStyle = '#000';
