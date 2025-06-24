@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Racing Game</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4CAF50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="CarRace">
+</head>
+<body>
+    <div id="startScreen" class="screen">
+        <h1>Car Racing Game</h1>
+        <div class="form">
+            <input type="text" id="playerName" placeholder="Enter your name">
+            <div class="color-selection">
+                <label>Choose car color:</label>
+                <button class="color-btn" data-color="red" style="background: red;"></button>
+                <button class="color-btn" data-color="blue" style="background: blue;"></button>
+                <button class="color-btn" data-color="green" style="background: green;"></button>
+            </div>
+            <button id="startButton">Start Game</button>
+        </div>
+    </div>
+
+    <div id="gameScreen" class="screen" style="display: none;">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div id="endScreen" class="screen" style="display: none;">
+        <h2>Game Over!</h2>
+        <p>Player: <span id="finalName"></span></p>
+        <p>Distance: <span id="finalDistance"></span> meters</p>
+        <button id="restartButton">Play Again</button>
+    </div>
+
+    <script src="game.js"></script>
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html> 
