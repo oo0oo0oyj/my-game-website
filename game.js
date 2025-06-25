@@ -25,8 +25,13 @@ class Game {
         // Initialize car position to center
         this.carPosition = (this.canvas.width - this.carWidth) / 2;
         
-        // Movement speed
-        this.moveSpeed = 25;
+        // Movement control variables
+        this.targetCarPosition = this.carPosition;
+        this.moveSpeed = 15; // Reduced from 25
+        this.movementLerp = 0.08; // Reduced from 0.15 for slower response
+        this.isMovingLeft = false;
+        this.isMovingRight = false;
+        this.difficulty = 'normal'; // 'easy', 'normal', 'hard'
         
         // Obstacle types
         this.obstacleTypes = ['car', 'mine', 'oil'];
@@ -34,68 +39,129 @@ class Game {
         // Touch control variables
         this.touchStartX = 0;
         this.touchEndX = 0;
-        this.minSwipeDistance = 30; // Minimum distance for a swipe
+        this.minSwipeDistance = 30;
+        this.isTouching = false;
+        this.lastTouchX = 0;
         
         // Bind methods
         this.handleKeyDown = this.handleKeyDown.bind(this);
+        this.handleKeyUp = this.handleKeyUp.bind(this);
         this.handleTouchStart = this.handleTouchStart.bind(this);
         this.handleTouchMove = this.handleTouchMove.bind(this);
         this.handleTouchEnd = this.handleTouchEnd.bind(this);
+        this.preventScroll = this.preventScroll.bind(this);
     }
 
-    init(playerName, carColor) {
+    init(playerName, carColor, difficulty = 'normal') {
         this.playerName = playerName;
         this.carColor = carColor;
+        this.difficulty = difficulty;
         this.distance = 0;
         this.obstacles = [];
+        
+        // Reset car position to center
         this.carPosition = (this.canvas.width - this.carWidth) / 2;
-        this.gameSpeed = 5;
+        this.targetCarPosition = this.carPosition;
         
-        // Add keyboard event listeners
+        // Reset movement flags
+        this.isMovingLeft = false;
+        this.isMovingRight = false;
+        
+        // Set game parameters based on difficulty
+        switch(difficulty) {
+            case 'easy':
+                this.gameSpeed = 4;
+                this.obstacleSpawnRate = 120;
+                break;
+            case 'normal':
+                this.gameSpeed = 5;
+                this.obstacleSpawnRate = 100;
+                break;
+            case 'hard':
+                this.gameSpeed = 6;
+                this.obstacleSpawnRate = 80;
+                break;
+        }
+        
+        // Remove any existing event listeners
+        document.removeEventListener('keydown', this.handleKeyDown);
+        document.removeEventListener('keyup', this.handleKeyUp);
+        this.canvas.removeEventListener('touchstart', this.handleTouchStart);
+        this.canvas.removeEventListener('touchmove', this.handleTouchMove);
+        this.canvas.removeEventListener('touchend', this.handleTouchEnd);
+        document.removeEventListener('touchmove', this.preventScroll);
+        
+        // Add event listeners
         document.addEventListener('keydown', this.handleKeyDown);
-        
-        // Add touch event listeners
-        this.canvas.addEventListener('touchstart', this.handleTouchStart, { passive: true });
-        this.canvas.addEventListener('touchmove', this.handleTouchMove, { passive: true });
+        document.addEventListener('keyup', this.handleKeyUp);
+        this.canvas.addEventListener('touchstart', this.handleTouchStart, { passive: false });
+        this.canvas.addEventListener('touchmove', this.handleTouchMove, { passive: false });
         this.canvas.addEventListener('touchend', this.handleTouchEnd, { passive: true });
+        document.addEventListener('touchmove', this.preventScroll, { passive: false });
         
         // Start the game loop
+        if (this.gameLoop) {
+            cancelAnimationFrame(this.gameLoop);
+        }
         this.gameLoop = requestAnimationFrame(() => this.update());
+    }
+
+    preventScroll(e) {
+        if (this.isTouching) {
+            e.preventDefault();
+        }
     }
 
     handleKeyDown(event) {
         if (event.key === 'ArrowLeft') {
-            this.carPosition = Math.max(0, this.carPosition - this.moveSpeed);
+            this.isMovingLeft = true;
         } else if (event.key === 'ArrowRight') {
-            this.carPosition = Math.min(this.canvas.width - this.carWidth, this.carPosition + this.moveSpeed);
+            this.isMovingRight = true;
+        }
+    }
+
+    handleKeyUp(event) {
+        if (event.key === 'ArrowLeft') {
+            this.isMovingLeft = false;
+            // Set target to current position when stopping
+            this.targetCarPosition = this.carPosition;
+        } else if (event.key === 'ArrowRight') {
+            this.isMovingRight = false;
+            // Set target to current position when stopping
+            this.targetCarPosition = this.carPosition;
         }
     }
 
     handleTouchStart(event) {
+        event.preventDefault();
         const touch = event.touches[0];
         this.touchStartX = touch.clientX;
-        this.touchEndX = touch.clientX;
+        this.lastTouchX = touch.clientX;
+        this.isTouching = true;
     }
 
     handleTouchMove(event) {
+        event.preventDefault();
+        if (!this.isTouching) return;
+        
         const touch = event.touches[0];
-        this.touchEndX = touch.clientX;
+        const currentX = touch.clientX;
+        const diffX = currentX - this.lastTouchX;
         
-        // Calculate movement
-        const diffX = this.touchEndX - this.touchStartX;
-        
-        // Move car based on touch movement
-        const newPosition = this.carPosition + diffX;
+        // Move car with enhanced smoothness
+        const sensitivity = 1.2; // Adjust this value to control movement sensitivity
+        const newPosition = this.carPosition + (diffX * sensitivity);
         this.carPosition = Math.max(0, Math.min(this.canvas.width - this.carWidth, newPosition));
         
-        // Update touch start position for next move
-        this.touchStartX = this.touchEndX;
+        this.lastTouchX = currentX;
     }
 
     handleTouchEnd(event) {
-        // Reset touch positions
+        this.isTouching = false;
         this.touchStartX = 0;
-        this.touchEndX = 0;
+        this.lastTouchX = 0;
+        // Set target to current position when touch ends
+        this.targetCarPosition = this.carPosition;
     }
 
     drawRoadBackground() {
@@ -126,55 +192,90 @@ class Game {
         
         switch(obstacle.type) {
             case 'car':
-                // Enemy car
-                this.ctx.fillStyle = '#666';
+                // Enemy car with enhanced design
+                // Car body
+                this.ctx.fillStyle = '#444';
                 this.ctx.beginPath();
                 this.ctx.moveTo(x + 25, y);
-                this.ctx.lineTo(x + 45, y + 30);
-                this.ctx.lineTo(x + 45, y + 60);
-                this.ctx.lineTo(x + 5, y + 60);
-                this.ctx.lineTo(x + 5, y + 30);
+                this.ctx.lineTo(x + 45, y + 20);
+                this.ctx.lineTo(x + 45, y + 70);
+                this.ctx.lineTo(x + 5, y + 70);
+                this.ctx.lineTo(x + 5, y + 20);
                 this.ctx.closePath();
                 this.ctx.fill();
                 
                 // Windows
-                this.ctx.fillStyle = '#333';
-                this.ctx.fillRect(x + 10, y + 10, 30, 15);
+                this.ctx.fillStyle = '#222';
+                this.ctx.fillRect(x + 10, y + 15, 30, 20);
+                
+                // Headlights
+                this.ctx.fillStyle = '#FFD700';
+                this.ctx.fillRect(x + 8, y + 5, 8, 5);
+                this.ctx.fillRect(x + 34, y + 5, 8, 5);
+                
+                // Taillights
+                this.ctx.fillStyle = '#FF0000';
+                this.ctx.fillRect(x + 8, y + 65, 8, 5);
+                this.ctx.fillRect(x + 34, y + 65, 8, 5);
                 break;
                 
             case 'mine':
-                // Mine body
-                this.ctx.fillStyle = '#333';
+                // Animated mine with pulsing effect
+                const pulseScale = 1 + Math.sin(Date.now() * 0.01) * 0.1;
+                
+                // Mine body with gradient
+                const mineGradient = this.ctx.createRadialGradient(
+                    x + 25, y + 25, 5,
+                    x + 25, y + 25, 20 * pulseScale
+                );
+                mineGradient.addColorStop(0, '#FF4444');
+                mineGradient.addColorStop(1, '#880000');
+                
+                this.ctx.fillStyle = mineGradient;
                 this.ctx.beginPath();
-                this.ctx.arc(x + 25, y + 25, 20, 0, Math.PI * 2);
+                this.ctx.arc(x + 25, y + 25, 20 * pulseScale, 0, Math.PI * 2);
                 this.ctx.fill();
                 
-                // Spikes
-                this.ctx.fillStyle = '#666';
+                // Spikes with rotation
+                const rotation = Date.now() * 0.002;
+                this.ctx.strokeStyle = '#666';
+                this.ctx.lineWidth = 3;
+                
                 for (let i = 0; i < 8; i++) {
-                    const angle = (i / 8) * Math.PI * 2;
-                    const spikeX = x + 25 + Math.cos(angle) * 25;
-                    const spikeY = y + 25 + Math.sin(angle) * 25;
+                    const angle = rotation + (i / 8) * Math.PI * 2;
+                    const spikeX = x + 25 + Math.cos(angle) * 25 * pulseScale;
+                    const spikeY = y + 25 + Math.sin(angle) * 25 * pulseScale;
                     this.ctx.beginPath();
                     this.ctx.moveTo(x + 25, y + 25);
                     this.ctx.lineTo(spikeX, spikeY);
-                    this.ctx.lineWidth = 5;
-                    this.ctx.strokeStyle = '#666';
                     this.ctx.stroke();
                 }
                 break;
                 
             case 'oil':
-                // Oil slick
-                const gradient = this.ctx.createRadialGradient(
+                // Animated oil slick with rainbow effect
+                const oilGradient = this.ctx.createRadialGradient(
                     x + 25, y + 25, 5,
-                    x + 25, y + 25, 25
+                    x + 25, y + 25, 30
                 );
-                gradient.addColorStop(0, 'rgba(0, 0, 0, 0.8)');
-                gradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)');
-                this.ctx.fillStyle = gradient;
+                
+                // Create rainbow-like effect
+                const hue = (Date.now() * 0.1) % 360;
+                oilGradient.addColorStop(0, `hsla(${hue}, 100%, 50%, 0.8)`);
+                oilGradient.addColorStop(0.5, `hsla(${(hue + 60) % 360}, 100%, 50%, 0.5)`);
+                oilGradient.addColorStop(1, `hsla(${(hue + 120) % 360}, 100%, 50%, 0.2)`);
+                
+                this.ctx.fillStyle = oilGradient;
                 this.ctx.beginPath();
-                this.ctx.ellipse(x + 25, y + 25, 25, 20, 0, 0, Math.PI * 2);
+                this.ctx.ellipse(
+                    x + 25, 
+                    y + 25, 
+                    30 + Math.sin(Date.now() * 0.005) * 5, 
+                    25 + Math.sin(Date.now() * 0.005) * 5, 
+                    Date.now() * 0.001, 
+                    0, 
+                    Math.PI * 2
+                );
                 this.ctx.fill();
                 break;
         }
@@ -303,6 +404,26 @@ class Game {
         this.ctx.restore();
     }
 
+    updateCarPosition() {
+        // Update target position based on input
+        if (this.isMovingLeft) {
+            this.targetCarPosition = Math.max(0, this.targetCarPosition - this.moveSpeed);
+            // Apply smooth movement only when moving
+            this.carPosition += (this.targetCarPosition - this.carPosition) * this.movementLerp;
+        } else if (this.isMovingRight) {
+            this.targetCarPosition = Math.max(0, Math.min(this.canvas.width - this.carWidth, this.targetCarPosition + this.moveSpeed));
+            // Apply smooth movement only when moving
+            this.carPosition += (this.targetCarPosition - this.carPosition) * this.movementLerp;
+        } else {
+            // When no keys are pressed, immediately stop by setting current position to target
+            this.carPosition = this.targetCarPosition;
+        }
+        
+        // Ensure both positions stay within bounds
+        this.targetCarPosition = Math.max(0, Math.min(this.canvas.width - this.carWidth, this.targetCarPosition));
+        this.carPosition = Math.max(0, Math.min(this.canvas.width - this.carWidth, this.carPosition));
+    }
+
     update() {
         this.frameCount++;
         this.distance += this.gameSpeed;
@@ -311,14 +432,39 @@ class Game {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Draw road background
+        // Update car position
+        this.updateCarPosition();
+        
+        // Draw road background with moving effect
         this.drawRoadBackground();
+        
+        // Update and draw obstacles
+        this.updateObstacles();
+        
+        // Draw car
+        this.drawCar(this.carPosition, this.carY);
+        
+        // Draw distance
+        this.ctx.fillStyle = '#fff';
+        this.ctx.font = 'bold 20px Racing Sans One';
+        this.ctx.fillText(`Distance: ${Math.floor(this.distance)}m`, 10, 30);
         
         // Spawn new obstacles
         if (this.frameCount % this.obstacleSpawnRate === 0) {
             this.spawnObstacle();
         }
         
+        // Update road animation
+        this.roadOffset += this.gameSpeed;
+        if (this.roadOffset >= this.canvas.height) {
+            this.roadOffset = 0;
+        }
+        
+        // Continue game loop
+        this.gameLoop = requestAnimationFrame(() => this.update());
+    }
+
+    updateObstacles() {
         // Update and draw obstacles
         for (let i = this.obstacles.length - 1; i >= 0; i--) {
             const obstacle = this.obstacles[i];
@@ -337,17 +483,6 @@ class Game {
                 this.obstacles.splice(i, 1);
             }
         }
-        
-        // Draw car
-        this.drawCar(this.carPosition, this.carY);
-        
-        // Draw distance
-        this.ctx.fillStyle = '#fff';
-        this.ctx.font = 'bold 20px Racing Sans One';
-        this.ctx.fillText(`Distance: ${Math.floor(this.distance)}m`, 10, 30);
-        
-        // Continue game loop
-        this.gameLoop = requestAnimationFrame(() => this.update());
     }
 
     checkCollision(obstacle) {
@@ -373,6 +508,7 @@ class Game {
     endGame() {
         cancelAnimationFrame(this.gameLoop);
         document.removeEventListener('keydown', this.handleKeyDown);
+        document.removeEventListener('keyup', this.handleKeyUp);
         
         // Remove touch event listeners
         this.canvas.removeEventListener('touchstart', this.handleTouchStart);
@@ -389,41 +525,38 @@ class Game {
 // Game initialization
 document.addEventListener('DOMContentLoaded', () => {
     const game = new Game();
-    let selectedColor = '';
+    let selectedColor = 'red';
+    let selectedDifficulty = 'normal';
 
     // Color selection
     document.querySelectorAll('.color-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
+            document.querySelectorAll('.color-btn').forEach(b => b.style.border = 'none');
+            btn.style.border = '2px solid white';
             selectedColor = btn.dataset.color;
         });
     });
 
-    // Start game button
-    document.getElementById('startButton').addEventListener('click', () => {
-        const playerName = document.getElementById('playerName').value.trim();
-        
-        if (!playerName) {
-            alert('Please enter your name!');
-            return;
-        }
-        
-        if (!selectedColor) {
-            alert('Please select a car color!');
-            return;
-        }
-        
-        document.getElementById('startScreen').style.display = 'none';
-        document.getElementById('gameScreen').style.display = 'block';
-        game.init(playerName, selectedColor);
+    // Difficulty selection
+    document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedDifficulty = btn.dataset.difficulty;
+        });
     });
 
-    // Restart game button
+    // Start game
+    document.getElementById('startButton').addEventListener('click', () => {
+        const playerName = document.getElementById('playerName').value || 'Player';
+        document.getElementById('startScreen').style.display = 'none';
+        document.getElementById('gameScreen').style.display = 'block';
+        game.init(playerName, selectedColor, selectedDifficulty);
+    });
+
+    // Restart game
     document.getElementById('restartButton').addEventListener('click', () => {
         document.getElementById('endScreen').style.display = 'none';
         document.getElementById('startScreen').style.display = 'block';
-        selectedColor = '';
-        document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('selected'));
     });
 }); 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -11,6 +11,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="CarRace">
+    <!-- 微信配置 -->
+    <meta name="format-detection" content="telephone=no">
+    <meta name="format-detection" content="email=no">
+    <meta name="x5-fullscreen" content="true">
+    <meta name="x5-page-mode" content="app">
+    <meta name="x5-orientation" content="portrait">
     
     <style>
         /* Prevent touch callout on iOS */
@@ -59,6 +65,14 @@
                 <button class="color-btn" style="background: green" data-color="green"></button>
                 <button class="color-btn" style="background: yellow" data-color="yellow"></button>
             </div>
+            <div class="difficulty-selection">
+                <label>Select Difficulty:</label>
+                <div class="difficulty-buttons">
+                    <button class="difficulty-btn" data-difficulty="easy">Easy</button>
+                    <button class="difficulty-btn active" data-difficulty="normal">Normal</button>
+                    <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+                </div>
+            </div>
             <p class="mobile-instructions">Swipe left or right to control the car</p>
             <button id="startButton">Start Game</button>
         </div>
@@ -77,8 +91,8 @@
 
     <script src="game.js?v=2"></script>
     <script>
-        // Register service worker
-        if ('serviceWorker' in navigator) {
+        // Register service worker only in production environment
+        if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js?v=2')
                     .then(registration => {
