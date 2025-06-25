@@ -337,7 +337,6 @@ class Game {
         // Show end screen with results
         document.getElementById('gameScreen').style.display = 'none';
         document.getElementById('endScreen').style.display = 'block';
-        document.getElementById('finalName').textContent = this.playerName;
         document.getElementById('finalDistance').textContent = Math.floor(this.distance);
     }
 }
