@@ -12,6 +12,7 @@ body {
     min-height: 100vh;
     background: #1a1a1a;
     color: #fff;
+    overflow: hidden;
 }
 
 .screen {
@@ -22,6 +23,8 @@ body {
     text-align: center;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 87, 34, 0.2);
+    max-width: 90vw;
+    width: 100%;
 }
 
 h1 {
@@ -30,6 +33,7 @@ h1 {
     text-transform: uppercase;
     letter-spacing: 2px;
     text-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
 }
 
 .form {
@@ -46,6 +50,9 @@ input {
     background: rgba(255, 255, 255, 0.1);
     color: #fff;
     transition: all 0.3s ease;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
 }
 
 input:focus {
@@ -59,11 +66,14 @@ input:focus {
     justify-content: center;
     align-items: center;
     padding: 1rem;
+    flex-wrap: wrap;
 }
 
 .color-selection label {
     font-size: 1.1rem;
     color: #FF5722;
+    width: 100%;
+    margin-bottom: 0.5rem;
 }
 
 .color-btn {
@@ -73,9 +83,10 @@ input:focus {
     border-radius: 50%;
     cursor: pointer;
     transition: transform 0.3s ease, border-color 0.3s ease;
+    touch-action: manipulation;
 }
 
-.color-btn:hover {
+.color-btn:hover, .color-btn:active {
     transform: scale(1.1);
     border-color: #FF5722;
 }
@@ -96,9 +107,11 @@ button {
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 1px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
-button:hover {
+button:hover, button:active {
     background: #f4511e;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(255, 87, 34, 0.4);
@@ -115,6 +128,9 @@ button:hover {
 #gameCanvas {
     border-radius: 20px;
     box-shadow: 0 0 30px rgba(255, 87, 34, 0.3);
+    max-width: 100%;
+    height: auto;
+    touch-action: none;
 }
 
 #endScreen {
@@ -123,7 +139,7 @@ button:hover {
 
 #endScreen h2 {
     color: #FF5722;
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 5vw, 2rem);
     margin-bottom: 1rem;
 }
 
@@ -136,4 +152,23 @@ button:hover {
 #finalDistance {
     color: #FF5722;
     font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .screen {
+        padding: 1.5rem;
+    }
+    
+    .color-selection {
+        gap: 0.5rem;
+    }
+    
+    button {
+        padding: 0.6rem 1.2rem;
+        font-size: 1rem;
+    }
+    
+    #gameCanvas {
+        border-radius: 10px;
+    }
 } 

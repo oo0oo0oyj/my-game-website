@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Car Racing Game</title>
     <link href="https://fonts.googleapis.com/css2?family=Racing+Sans+One&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css?v=2">
@@ -11,6 +11,41 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="CarRace">
+    
+    <style>
+        /* Prevent touch callout on iOS */
+        * {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            touch-action: none;
+        }
+        
+        /* Hide address bar on iOS */
+        html {
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        /* Instructions for mobile users */
+        .mobile-instructions {
+            display: none;
+            color: #fff;
+            text-align: center;
+            margin: 10px 0;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-instructions {
+                display: block;
+            }
+        }
+    </style>
 </head>
 <body>
     <div id="startScreen" class="screen">
@@ -24,14 +59,16 @@
                 <button class="color-btn" style="background: green" data-color="green"></button>
                 <button class="color-btn" style="background: yellow" data-color="yellow"></button>
             </div>
+            <p class="mobile-instructions">Swipe left or right to control the car</p>
             <button id="startButton">Start Game</button>
         </div>
     </div>
-
+    
     <div id="gameScreen" class="screen" style="display: none;">
         <canvas id="gameCanvas"></canvas>
+        <p class="mobile-instructions">Swipe left or right to control the car</p>
     </div>
-
+    
     <div id="endScreen" class="screen" style="display: none;">
         <h2>Game Over!</h2>
         <p>Distance traveled: <span id="finalDistance">0</span>m</p>
@@ -52,6 +89,18 @@
                     });
             });
         }
+        
+        // Prevent scrolling on mobile devices
+        document.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+        
+        // Handle iOS full screen
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                window.scrollTo(0, 1);
+            }, 0);
+        });
     </script>
 </body>
 </html> 

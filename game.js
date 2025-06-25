@@ -31,8 +31,16 @@ class Game {
         // Obstacle types
         this.obstacleTypes = ['car', 'mine', 'oil'];
         
+        // Touch control variables
+        this.touchStartX = 0;
+        this.touchEndX = 0;
+        this.minSwipeDistance = 30; // Minimum distance for a swipe
+        
         // Bind methods
         this.handleKeyDown = this.handleKeyDown.bind(this);
+        this.handleTouchStart = this.handleTouchStart.bind(this);
+        this.handleTouchMove = this.handleTouchMove.bind(this);
+        this.handleTouchEnd = this.handleTouchEnd.bind(this);
     }
 
     init(playerName, carColor) {
@@ -46,6 +54,11 @@ class Game {
         // Add keyboard event listeners
         document.addEventListener('keydown', this.handleKeyDown);
         
+        // Add touch event listeners
+        this.canvas.addEventListener('touchstart', this.handleTouchStart, { passive: true });
+        this.canvas.addEventListener('touchmove', this.handleTouchMove, { passive: true });
+        this.canvas.addEventListener('touchend', this.handleTouchEnd, { passive: true });
+        
         // Start the game loop
         this.gameLoop = requestAnimationFrame(() => this.update());
     }
@@ -56,6 +69,33 @@ class Game {
         } else if (event.key === 'ArrowRight') {
             this.carPosition = Math.min(this.canvas.width - this.carWidth, this.carPosition + this.moveSpeed);
         }
+    }
+
+    handleTouchStart(event) {
+        const touch = event.touches[0];
+        this.touchStartX = touch.clientX;
+        this.touchEndX = touch.clientX;
+    }
+
+    handleTouchMove(event) {
+        const touch = event.touches[0];
+        this.touchEndX = touch.clientX;
+        
+        // Calculate movement
+        const diffX = this.touchEndX - this.touchStartX;
+        
+        // Move car based on touch movement
+        const newPosition = this.carPosition + diffX;
+        this.carPosition = Math.max(0, Math.min(this.canvas.width - this.carWidth, newPosition));
+        
+        // Update touch start position for next move
+        this.touchStartX = this.touchEndX;
+    }
+
+    handleTouchEnd(event) {
+        // Reset touch positions
+        this.touchStartX = 0;
+        this.touchEndX = 0;
     }
 
     drawRoadBackground() {
@@ -333,6 +373,11 @@ class Game {
     endGame() {
         cancelAnimationFrame(this.gameLoop);
         document.removeEventListener('keydown', this.handleKeyDown);
+        
+        // Remove touch event listeners
+        this.canvas.removeEventListener('touchstart', this.handleTouchStart);
+        this.canvas.removeEventListener('touchmove', this.handleTouchMove);
+        this.canvas.removeEventListener('touchend', this.handleTouchEnd);
         
         // Show end screen with results
         document.getElementById('gameScreen').style.display = 'none';
